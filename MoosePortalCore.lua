@@ -136,7 +136,17 @@ local defaults = {
         inviteThrottleTime = 10, -- seconds
 
         queueProtection = LF_QUEUES,
-        statusProtection = {},
+        statusProtection = {
+            AFK = {
+                blockInvites = false,
+                sendMessage = false,
+                returnMessage = L["I'm currently AFK"],
+            },
+            DND = {
+                blockInvites = false,
+                sendMessage = false,
+                returnMessage = L["I'm currently DND"],
+            },
         },
     },
 }
@@ -178,7 +188,7 @@ function WIC:OnInitialize()
     self:SetEnabledState(self.db.profile.active)
     if not self:IsEnabled() and self.db.char.info.enable < self.db.char.infoMax.enable then
         self.db.char.info.enable = self.db.char.info.enable + 1
-        self:Print(L["You can run /wienable to enable MoosePortal."])
+        self:Print(L["You can run /mpenable to enable MoosePortal."])
     end
 end
 
@@ -196,7 +206,7 @@ function WIC:Enable_ModuleHandling()
     if showInfo then
         if self.db.char.info.setup < self.db.char.infoMax.setup then
             self.db.char.info.setup = self.db.char.info.setup + 1
-            self:Print(L["Run /wi modules or /wi options to setup MoosePortal."])
+            self:Print(L["Run /mp modules or /mp options to setup MoosePortal."])
         end
     end
 end
@@ -293,7 +303,7 @@ do-- CMD
             if self.RegisteredModules[moduleName] then
                 self:SelectModule(moduleName)
             else
-                self:Printf(L["Usage: /wi modules moduleName (case sensitive)"])
+                self:Printf(L["Usage: /mp modules moduleName (case sensitive)"])
                 self:Printf(L["Modules: %s"], self.RegisteredModulesList )
             end
         elseif arg1 == "enable" or arg1 == "on" or arg1 == L["enable"] or arg1 == L["on"] then
@@ -316,7 +326,7 @@ do-- CMD
                 self:Print(L["Disabled"])
             end
         elseif not arg1 or arg1 == "" or arg1 == "help" or arg1 == "usage" or arg1 == L["help"] or arg1 == L["usage"] then
-            self:Print(L["Usage: /wi <command>\nCommands: modules, options"])
+            self:Print(L["Usage: /mp <command>\nCommands: modules, options"])
         elseif arg1 == "options" or arg1 == "op" then
             -- Load InterfaceOptionsFrameAddOns frame...
             InterfaceOptionsFrame_OpenToCategory(ADDONNAME)
@@ -325,7 +335,7 @@ do-- CMD
             InterfaceOptionsFrameAddOnsListScrollBar:SetValue(select(2, InterfaceOptionsFrameAddOnsListScrollBar:GetMinMaxValues() ) )
             InterfaceOptionsFrame_OpenToCategory(ADDONNAME)
         else
-            LibStub("AceConfigCmd-3.0").HandleCommand(self, "wi", ADDONNAME.."Options", input)
+            LibStub("AceConfigCmd-3.0").HandleCommand(self, "mp", ADDONNAME.."Options", input)
         end
     end
 end
