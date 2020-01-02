@@ -1,0 +1,13 @@
+## Interface: 80205
+## Version: 1.0.0
+## Title: !MoosePortal -|cff224477 1.0.0|r
+## Notes: Auto-invite with keywords
+
+## Author: Areko <Edited by Qk> 
+## SavedVariables: MoosePortalCoreDB
+## OptionalDeps: LibStub, CallbackHandler-1.0, Ace3
+
+embeds.xml
+locales.xml
+
+MoosePortalCore.lua
