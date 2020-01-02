@@ -211,6 +211,16 @@ function WIC:Enable_ModuleHandling()
     end
 end
 
+function PrintWelcomeMsg()
+    local realm = GetRealmName()
+    local faction = UnitFactionGroup("player")
+    local msg = format("|cffAAAAAAversion: %s, bugs & features: github.com/Sp5rky/MoosePortal|r\n|cff209f9b", GetAddOnMetadata(addonName, "Version"))
+    if (realm == "Arugal" and faction == "Horde") then
+        msg = msg .. format("You are lucky enough to play with MoosePortal author on one |cffFFFFFF%s |cff209f9brealm! Feel free to mail me (|cff8787edQk|cff209f9b) a supportive gold tip or kind word!", realm)
+    end
+    Print(msg .. "|r")
+end
+
 function WIC:OnEnable()
     self:Enable_ModuleHandling()
 
