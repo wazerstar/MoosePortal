@@ -484,117 +484,6 @@ do-- CheckGroupSize
     end
 end
 
-do-- IsQueueProtected / IsStatusProtected
-    local BNSendWhisper, SendChatMessage, GetLFGMode, GetMaxBattlefieldID, GetBattlefieldStatus, UnitIsAFK, UnitIsDND, UnitIsUnit, GetCVar, SetCVar =
-          BNSendWhisper, SendChatMessage, GetLFGMode, GetMaxBattlefieldID, GetBattlefieldStatus, UnitIsAFK, UnitIsDND, UnitIsUnit, GetCVar, SetCVar
-
-    local function sendReturnMessage(name, presenceID, message)
-        if presenceID then
-            BNSendWhisper(presenceID, message)
-        elseif name and not UnitIsUnit("player", name) then
-            SendChatMessage(message, "WHISPER", nil, name)
-        end
-    end
-
-    function WIC:IsQueueProtected(name, presenceName, presenceID)
-        if not name or (name and presenceName and not presenceID) or (name and presenceID and not presenceName) then error("Usage: IsQueueProtected(name) or IsQueueProtected(toonName, presenceName, presenceID") end
-
-        local printName = presenceName and format(L["%s (%s)"], presenceName or L["<No name given>"], name or L["<No toon name given>"]) or name
-
-        -- Look for queue Protection
-        for id, data in pairs(self.db.profile.queueProtection) do
-            if type(id) == "number" and data.blockInvites then
-                local mode = GetLFGMode(id)
-                if mode then
-                    if data.sendMessage and len(data.returnMessage) > 1 then
-                        if presenceID then
-                            sendReturnMessage(name, presenceID, data.returnMessage)
-                        else
-                            sendReturnMessage(name, nil, data.returnMessage)
-                        end
-                    end
-
-                    self:Printf(L["Your are in a LF-Queue. Can't invite %s"], printName)
-                    return true
-                end
-            elseif id == LF_QUEUE_PVP and data.blockInvites then
-                for i=1, GetMaxBattlefieldID() do
-                    local status = GetBattlefieldStatus(i)
-                    if status ~= "none" then
-                        if data.sendMessage and len(data.returnMessage) > 1 then
-                            if presenceID then
-                                sendReturnMessage(name, presenceID, data.returnMessage)
-                            else
-                                sendReturnMessage(name, nil, data.returnMessage)
-                            end
-                        end
-
-                        self:Printf(L["Your are in a LF-Queue. Can't invite %s"], printName)
-                        return true
-                    end
-                end
-            end
-        end
-
-        return false
-    end
-
-    function WIC:IsStatusProtected(name, presenceName, presenceID)
-        if not name or (name and presenceName and not presenceID) or (name and presenceID and not presenceName) then error("Usage: IsQueueProtected(name) or IsQueueProtected(toonName, presenceName, presenceID") end
-
-        local printName = presenceName and format(L["%s (%s)"], presenceName or L["<No name given>"], name or L["<No toon name given>"]) or name
-
-        if UnitIsAFK("player") then
-            local afkProtection = self.db.profile.statusProtection.AFK
-
-            if afkProtection.sendMessage then
-                local returnMessage = afkProtection.returnMessage
-                if len(returnMessage) > 1 then
-                    local autoClearAFK = GetCVar("autoClearAFK")
-                    if autoClearAFK ~= "0" then
-                        SetCVar("autoClearAFK", "0")
-                    end
-
-                    if presenceID then
-                        sendReturnMessage(name, presenceID, returnMessage)
-                    else
-                        sendReturnMessage(name, nil, returnMessage)
-                    end
-
-                    -- re-set autoClearAFK value
-                    SetCVar("autoClearAFK", autoClearAFK)
-                end
-            end
-
-            if afkProtection.blockInvites then
-                self:Printf(L["Your are AFK. Invite to %s was not sent."], printName)
-                return true
-            end
-        end
-        if UnitIsDND("player") then
-            local dndProtection = self.db.profile.statusProtection.DND
-
-            if dndProtection.sendMessage then
-                local returnMessage = dndProtection.returnMessage
-                if len(returnMessage) > 1 then
-                    if presenceID then
-                        sendReturnMessage(name, presenceID, returnMessage)
-                    else
-                        sendReturnMessage(name, nil, returnMessage)
-                    end
-                end
-            end
-
-            if dndProtection.blockInvites then
-                self:Printf(L["Your are DND. Haven't send an invite to %s"], printName)
-                return true
-            end
-        end
-
-        return false
-    end
-end
-
 --- InviteErrorCodeList
 -- 1: Player is not allowed to invite other players
 -- 2: No BNet/RealID friend is online with this presenceID
@@ -872,28 +761,11 @@ function optionHandler:SetModule(info, value, ...)
         WIC:EnableSelectedModule()
     end
 end
-function optionHandler:SetQueue(info, value, ...)
-    local name = info[#info]
 
-    WIC.db.profile.queueProtection[info.arg][name] = value
-end
-function optionHandler:GetQueue(info, value, ...)
-    local name = info[#info]
-
-    return WIC.db.profile.queueProtection[info.arg][name]
-end
-function optionHandler:SetStatus(info, value, ...)
-    local name = info[#info]
-
-    WIC.db.profile.statusProtection[info.arg][name] = value
-end
 function optionHandler:GetStatus(info, value, ...)
     local name = info[#info]
 
     return WIC.db.profile.statusProtection[info.arg][name]
-end
-function optionHandler:IsReturnMessageHidden(info)
-    return not WIC.db.profile.queueProtection[info.arg].sendMessage
 end
 
 local options = {
@@ -932,7 +804,7 @@ local options = {
             desc = L["Delay(seconds) needed between to invites of the same player before, MoosePortal can send a new invite."],
             min = 0.5,
             max = 120,
-            softMin = 6,
+            softMin = 5,
             softMax = 30,
             bigStep = 1,
             step = 0.1,
@@ -1012,14 +884,6 @@ local options = {
                 },
             },
         },
-        queueProtection = {
-            type = "group",
-            inline = true,
-            name = L["LF-Queue Protection"],
-            set = "SetQueue",
-            get = "GetQueue",
-            args = {},
-        },
     },
 }
 
@@ -1029,7 +893,6 @@ do-- updateConfig
           LFG_CATEGORY_NAMES, QUEUED_STATUS_UNKNOWN, PVP
 
     function updateConfig()
-        local args = wipe(options.args.queueProtection.args)
         for id in pairs(WIC.db.profile.queueProtection) do
             local name
             if type(id) == "number" then
@@ -1037,44 +900,7 @@ do-- updateConfig
             else
                 name = PVP
             end
-
-            args[name] = {
-                type = "group",
-                name = name,
-                inline = true,
-                args = {
-                    blockInvites = {
-                        type = "toggle",
-                        name = L["Block invites"],
-                        desc = format(L["When in the %q Queue block invites."], name),
-                        arg = id,
-                        order = 1,
-                    },
-                    sendMessage = {
-                        type = "toggle",
-                        name = L["Send an answer"],
-                        desc = L["Send a message to inform that you have not send an invite because your are in a LF-Queue."],
-                        arg = id,
-                        order = 2,
-                    },
-                    returnMessage = {
-                        type = "input",
-                        name = L["Answer"],
-                        desc = L["The message you will send."],
-                        arg = id,
-                        --hidden = "IsReturnMessageHidden",
-                        width = "full",
-                        order = 3,
-                    },
-                },
-            }
         end
-        args.descriptionText = {
-            type = "description",
-            name = L["Choose when you don't want to automatic invite other players when you are in a LF-Queue.\n"],
-            fontSize = "normal",
-            order = 0,
-        }
     end
 end
 
