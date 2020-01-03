@@ -519,9 +519,7 @@ do-- InvitePlayer
         end
 
         if self:CanInvite() then
-            if self:IsQueueProtected(name) or self:IsStatusProtected(name) then
-                return false, 7
-            elseif self:CheckGroupSize() then
+            if self:CheckGroupSize() then
                 local time = GetTime()
                 if (playerName_Throttle[name] or 0) < time then
                     playerName_Throttle[name] = time + self.db.profile.inviteThrottleTime
