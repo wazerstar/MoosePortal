@@ -525,6 +525,7 @@ do-- InvitePlayer
                     playerName_Throttle[name] = time + self.db.profile.inviteThrottleTime
                     --_G.InviteUnit( self:UniformPlayerName(name) )
                     InviteUnit( Ambiguate(name, "none") )
+                    FlashClientIcon()
                     return true
                 else
                     return false, 6
