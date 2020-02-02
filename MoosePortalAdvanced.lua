@@ -201,32 +201,6 @@ do-- caching
     local GetNumGuildMembers, GetGuildRosterInfo, BNGetNumFriends, BNGetFriendInfoByID =
           GetNumGuildMembers, GetGuildRosterInfo, BNGetNumFriends, BNGetFriendInfoByID
 
-    local LibWho = LibStub("LibWho-2.0")
-    local who = LibWho:Library()
-    local dash = "-"
-    local opts = {
-        queue = who.WHOLIB_QUEUE_QUIET,
-        --timeout = -1,
-        --callback = "",
-        --handler = "",
-        --flags = "",
-    }
-    local bucketHandle
-    function WIA:EnableGuildCaching()
-        if bucketHandle then
-            self:UnregisterBucket(bucketHandle)
-        end
-        bucketHandle = self:RegisterBucketEvent("GUILD_ROSTER_UPDATE", self.db.profile.guildRosterUpdateDelay)
-        LibWho.RegisterCallback(self, 'WHOLIB_QUERY_RESULT')
-
-        self:CheckAllRegisteredGuilds()
-    end
-    function WIA:DisableGuildCaching()
-        self:UnregisterBucket(bucketHandle)
-        bucketHandle = nil
-        LibWho.UnregisterCallback(self, 'WHOLIB_QUERY_RESULT')
-    end
-
     local LET_GUILD = WIA.LIST_ENTRY_TYPES.GUILD
     local LET_REALM = WIA.LIST_ENTRY_TYPES.REALM
 
