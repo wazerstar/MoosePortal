@@ -202,54 +202,6 @@ do-- caching
         delTable(isCached)
     end
 
-    function WIA:UpdateGuildForPlayer(name)
-        if type(name) ~= "string" then return end
-        opts.queue = who.WHOLIB_QUEUE_QUIET
-
-        -- UserInfo returns *nothing* when name-server is used on a non x-realm, and type(*nothing*) triggers an error.
-        -- So we can check whether the call was successful
-        local noError = pcall(function() return type(who:UserInfo(name, opts) ) == "nil" end )
-        --[===[@debug@
-        self:Printf("WhoLib call with %q was %s", find(name, "-", nil, true) and "name-server" or "name", noError and "successful" or "not successful, retry..")
-        --@end-debug@]===]
-        if not noError then
-            --[===[@debug@
-            self:Printf("Try again without realm: %s", name)
-            --@end-debug@]===]
-            name = split(dash, name)
-            who:UserInfo(name, opts)
-        end
-    end
-
-    function WIA:UpdatePlayerForGuild(guild)
-        if type(guild) ~= "string" then return end
-        opts.queue = who.WHOLIB_QUEUE_SCANNING
-        who:Who(guild, opts)
-    end
-
-    function WIA:WHOLIB_QUERY_RESULT(event, query, results, complete, info)
-        --[===[@debug@
-        self:Printf("WhoLib event: %s", event)
-        --@end-debug@]===]
-        if event == "WHOLIB_QUERY_RESULT" then
-            local cache = self.db.global.cache
-            for _, result in pairs(results) do
-                local id = core:UniformPlayerName(result.Name)
-                cache[id].guild = result.Guild or ""
-                --[===[@debug@
-                self:Printf("Update: %s(%s), Guild: %s", id, result.Name, result.Guild)
-                --@end-debug@]===]
-                --result.Name
-                --result.Guild
-                --result.Online
-                --result.Class
-                --result.Race
-                --result.Level
-                --result.Zone
-            end
-        end
-    end
-
     local last_numGuildMembers, last_numOnline = 0,0
     function WIA:GUILD_ROSTER_UPDATE()
         local guildName = GetGuildInfo("player")
