@@ -127,9 +127,6 @@ end
 
 
 function WIA:OnEnable()
-    self:CheckGuildCacheStatus()
-    self:CheckBattleNetCacheStatus()
-
     self:RegisterAllChannels()
 end
 
@@ -138,23 +135,6 @@ function WIA:OnDisable()
     self:CheckBattleNetCacheStatus()
 
     self:UnregisterAllChannels()
-end
-
-function WIA:CheckGuildCacheStatus()
-    if self.db.profile.hasGuildListEntrys and self:IsEnabled() then
-        self:EnableGuildCaching()
-    else
-        self:DisableGuildCaching()
-    end
-end
-
-function WIA:CheckBattleNetCacheStatus()
-    if self.db.profile.hasBNetListEntrys and self:IsEnabled() then
-        self:RegisterEvent("BN_FRIEND_TOON_ONLINE")
-        self:CheckAllOnlineFriends()
-    else
-        self:UnregisterEvent("BN_FRIEND_TOON_ONLINE")
-    end
 end
 
 do-- CMD
