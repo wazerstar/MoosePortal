@@ -1,6 +1,6 @@
 ## Interface: 80205
-## Version: 1.0.2
-## Title: !MoosePortal -|cff224477 1.0.2|r
+## Version: 1.0.3
+## Title: !MoosePortal -|cff224477 1.0.3|r
 ## Notes: Auto-invite with keywords
 
 ## Author: Areko <Edited by Qk> 
