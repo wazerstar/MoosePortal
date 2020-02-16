@@ -129,6 +129,7 @@ end
 function WIA:OnEnable()
 	joinedTable = getTable()
 	self:RegisterEvent("GROUP_ROSTER_UPDATE", "GroupChanged")
+	self:RegisterEvent("PLAYER_FLAGS_CHANGED", "PlayerFlagsChanged")
     self:RegisterAllChannels()
 end
 
@@ -401,6 +402,10 @@ function WIA:GroupChanged()
 	end
 end
 
+function WIA:PlayerFlagsChanged(unit)
+	playerAFK = UnitIsAFK("player")
+end
+
 --local keywordIDsCache = {}
 function WIA:MessageIn(channelType, event, ...)
     if not self:IsEnabled() then return end
@@ -428,7 +433,7 @@ function WIA:MessageIn(channelType, event, ...)
         local id = keywordIDs[i]
         local data = keywords[id]
 
-        if self:GetGroupSize() < data.maxGroupSize and select(2, GetPlayerInfoByGUID(guid)) ~= "MAGE" then -- GetGroupSize returns without player
+        if self:GetGroupSize() < data.maxGroupSize and select(2, GetPlayerInfoByGUID(guid)) ~= "MAGE" and not playerAFK then -- GetGroupSize returns without player
             if next(data.list) then -- check if block/allow entry exits
 
                 if data.hasGuildListEntrys and not overrideScheduleTime and channelType == CT_NORMAL then
