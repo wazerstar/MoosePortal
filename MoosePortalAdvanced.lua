@@ -127,12 +127,14 @@ end
 
 
 function WIA:OnEnable()
+	joinedTable = getTable()
+	self:RegisterEvent("GROUP_ROSTER_UPDATE", "GroupChanged")
     self:RegisterAllChannels()
 end
 
 function WIA:OnDisable()
-    self:CheckGuildCacheStatus()
-    self:CheckBattleNetCacheStatus()
+    --self:CheckGuildCacheStatus()
+    --self:CheckBattleNetCacheStatus()
 
     self:UnregisterAllChannels()
 end
@@ -388,12 +390,23 @@ do-- Channel Registering
     end
 end
 
+function WIA:GroupChanged()
+	for groupindex = 1,GetNumGroupMembers()-1 do
+		unit = "party"..groupindex
+		if not UnitIsUnit("player", unit) and joinedTable[UnitGUID(unit)] ~= nil then
+			print(joinedTable[UnitGUID(unit)])
+			joinedTable[UnitGUID(unit)] = nil
+			PlaySoundFile("Interface\\AddOns\\WeakAuras\\Media\\Sounds\\TempleBellHuge.ogg", "Dialog")
+		end
+	end
+end
+
 --local keywordIDsCache = {}
 function WIA:MessageIn(channelType, event, ...)
     if not self:IsEnabled() then return end
     local msg, name = ...
     --local presenceID = select(13, ...)
-    local _, _, _, _, _, _, _, _, _, _, _, _, presenceID = ...
+    local _, _, _, _, _, _, _, _, _, _, _, guid, presenceID = ...
 
     -- if #keywordIDsCache > 0 then
     --     --[===[@debug@
@@ -415,7 +428,7 @@ function WIA:MessageIn(channelType, event, ...)
         local id = keywordIDs[i]
         local data = keywords[id]
 
-        if self:GetGroupSize() < data.maxGroupSize then -- GetGroupSize returns without player
+        if self:GetGroupSize() < data.maxGroupSize and select(2, GetPlayerInfoByGUID(guid)) ~= "MAGE" then -- GetGroupSize returns without player
             if next(data.list) then -- check if block/allow entry exits
 
                 if data.hasGuildListEntrys and not overrideScheduleTime and channelType == CT_NORMAL then
@@ -435,6 +448,7 @@ function WIA:MessageIn(channelType, event, ...)
                 local result, code
                 if channelType == CT_NORMAL then
                     result, code = core:InvitePlayer(name)
+					joinedTable[guid] = format("|cff0099CC------ %s ------|r |cffffff00%s|r |cff0099CC------|r |cffff6600%s|r |cff0099CC------|r", string.upper(data.keyword), Ambiguate(name, "all"), msg)
                 elseif channelType == CT_BNET then
                     result, code = core:InviteBNet(presenceID)
                 end
@@ -468,7 +482,7 @@ function WIA:GetMatchingKeywordIDs(resultTable, msg, channelType, channel)
             else
                 local plainMatch = data.plainMatch
                 if not plainMatch then
-                    msg = " "..msg.." "
+                    keyword = "%f[%a]"..keyword.."%f[%A]"
                 end
                 if find(msg, keyword, nil, plainMatch) then
                     tinsert(resultTable, id)
