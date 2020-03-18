@@ -129,7 +129,7 @@ end
 function WIA:OnEnable()
 	joinedTable = getTable()
 	self:RegisterEvent("GROUP_ROSTER_UPDATE", "GroupChanged")
-	self:RegisterEvent("PLAYER_FLAGS_CHANGED", "PlayerFlagsChanged")
+	--self:RegisterEvent("PLAYER_FLAGS_CHANGED", "PlayerFlagsChanged")
     self:RegisterAllChannels()
 end
 
@@ -432,7 +432,8 @@ function WIA:MessageIn(channelType, event, ...)
     for i=1, #keywordIDs do
         local id = keywordIDs[i]
         local data = keywords[id]
-
+		local joinedMessage = format("|cff0099CC------ %s ------|r |cffffff00%s|r |cff0099CC------|r |cffff6600%s|r |cff0099CC------|r", string.upper(data.keyword), Ambiguate(name, "all"), msg)
+		
         if self:GetGroupSize() < data.maxGroupSize and select(2, GetPlayerInfoByGUID(guid)) ~= "MAGE" and not playerAFK then -- GetGroupSize returns without player
             if next(data.list) then -- check if block/allow entry exits
 
@@ -447,13 +448,14 @@ function WIA:MessageIn(channelType, event, ...)
                         overrideScheduleTime = 5.5 > checkPlayerScheduleTime and 5.5 or checkPlayerScheduleTime
                     end
                 end
-
-                self:ScheduleTimer("CheckPlayer", overrideScheduleTime or checkPlayerScheduleTime, data.keyword, name, presenceID, channelType)
+				
+                self:ScheduleTimer("CheckPlayer", overrideScheduleTime or checkPlayerScheduleTime, id, name, presenceID, channelType, guid, joinedMessage)
             else
+				joinedTable[guid] = joinedMessage
                 local result, code
                 if channelType == CT_NORMAL then
                     result, code = core:InvitePlayer(name)
-					joinedTable[guid] = format("|cff0099CC------ %s ------|r |cffffff00%s|r |cff0099CC------|r |cffff6600%s|r |cff0099CC------|r", string.upper(data.keyword), Ambiguate(name, "all"), msg)
+					
                 elseif channelType == CT_BNET then
                     result, code = core:InviteBNet(presenceID)
                 end
@@ -606,19 +608,19 @@ function WIA:ResetCache()
     wipe(self.db.global.cache)
 end
 
-function WIA:CheckPlayer(keywordID, playerName, presenceID, channelType)
+function WIA:CheckPlayer(keywordID, playerName, presenceID, channelType, guid, joinedMessage)
     local keyword = self.db.profile.keywords[keywordID]
 
     local isBlock = keyword.listType == self.LIST_TYPES.BLOCK
     local isAllow = keyword.listType == self.LIST_TYPES.ALLOW
-
-
+	
     if channelType == CT_NORMAL then
         if type(playerName) == "string" then
             local id = core:UniformPlayerName(playerName)
             if self:CheckList(keywordID, id ) then
+				joinedTable[guid] = joinedMessage
                 local result, code = core:InvitePlayer(playerName)
-                --[===[@debug@
+				--[===[@debug@
                 self:Printf("Invite Sent: %s", result and "OK" or "Error: "..code )
                 --@end-debug@]===]
             elseif keyword.showInviteBlockMessage then
@@ -650,6 +652,7 @@ function WIA:CheckPlayer(keywordID, playerName, presenceID, channelType)
             end
 
             if canInvite then
+				joinedTable[guid] = joinedMessage
                 local result, code = core:InviteBNet(presenceID, friendIndex)
                 --[===[@debug@
                 self:Printf("Invite Sent: %s", result and "OK" or "Error: "..code )
