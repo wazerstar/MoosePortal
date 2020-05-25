@@ -128,8 +128,9 @@ end
 
 function WIA:OnEnable()
 	joinedTable = getTable()
+	destinationFile = getTable()
 	self:RegisterEvent("GROUP_ROSTER_UPDATE", "GroupChanged")
-	--self:RegisterEvent("PLAYER_FLAGS_CHANGED", "PlayerFlagsChanged")
+	self:RegisterEvent("RAID_ROSTER_UPDATE", "GroupChanged")
     self:RegisterAllChannels()
 end
 
@@ -393,11 +394,15 @@ end
 
 function WIA:GroupChanged()
 	for groupindex = 1,GetNumGroupMembers()-1 do
-		unit = "party"..groupindex
-		if not UnitIsUnit("player", unit) and joinedTable[UnitGUID(unit)] ~= nil then
-			print(joinedTable[UnitGUID(unit)])
-			joinedTable[UnitGUID(unit)] = nil
-			PlaySoundFile("Interface\\AddOns\\WeakAuras\\Media\\Sounds\\TempleBellHuge.ogg", "Dialog")
+		local unit = "party"..groupindex
+		local guid = UnitGUID(unit)
+		if not UnitIsUnit("player", unit) and joinedTable[guid] ~= nil then
+			print(joinedTable[guid])
+			joinedTable[guid] = nil
+			if destinationFile[guid] ~= nil then
+				FlashClientIcon()
+				PlaySoundFile(destinationFile[guid], "Dialog")
+			end
 		end
 	end
 end
@@ -433,6 +438,18 @@ function WIA:MessageIn(channelType, event, ...)
         local id = keywordIDs[i]
         local data = keywords[id]
 		local joinedMessage = format("|cff0099CC------ %s ------|r |cffffff00%s|r |cff0099CC------|r |cffff6600%s|r |cff0099CC------|r", string.upper(data.keyword), Ambiguate(name, "all"), msg)
+		
+		if data.keyword == "og" or data.keyword == "org" or data.keyword == "orc" then
+			destinationFile[guid] = "Interface\\CustomSounds\\orgrimmar.mp3"
+		elseif data.keyword == "uc" or data.keyword == "undercity" then
+			destinationFile[guid] = "Interface\\CustomSounds\\undercity.mp3"
+		elseif data.keyword == "tb" or data.keyword == "thunder" then
+			destinationFile[guid] = "Interface\\CustomSounds\\thunderbluff.mp3"
+		elseif data.keyword == "port" then
+			destinationFile[guid] = "Interface\\CustomSounds\\portal.mp3"
+		elseif data.keyword == "water" then
+			destinationFile[guid] = "Interface\\CustomSounds\\water.mp3"
+		end
 		
         if self:GetGroupSize() < data.maxGroupSize and select(2, GetPlayerInfoByGUID(guid)) ~= "MAGE" and not playerAFK then -- GetGroupSize returns without player
             if next(data.list) then -- check if block/allow entry exits
